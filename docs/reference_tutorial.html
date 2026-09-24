@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tutorial Fotogrametri — Monitoring Tinggi Sawit v0.4.0</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg-deep:#0B0F11;
+  --bg-panel:#12181B;
+  --bg-panel-2:#171F22;
+  --bg-code:#0D1315;
+  --border:#263135;
+  --border-soft:#1C2528;
+  --text-primary:#E7EDEE;
+  --text-secondary:#8FA0A4;
+  --text-muted:#546366;
+  --accent:#E3A73F;
+  --accent-dim:#5A4118;
+  --accent-glow:rgba(227,167,63,0.13);
+  --warn-text:#E8C468; --warn-border:#8A6A1E; --warn-bg:#20190E;
+  --danger-text:#E88A82; --danger-border:#8A3A32; --danger-bg:#1F1211;
+  --info-text:#8FC7D6; --info-border:#2E5F6E; --info-bg:#0F1B1E;
+  --success-text:#8FCBA0; --success-border:#2E6E48; --success-bg:#0E1C15;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg-deep);
+  color:var(--text-primary);
+  font-family:'IBM Plex Sans',sans-serif;
+  min-height:100vh;
+  position:relative;
+}
+body::before{
+  content:'';
+  position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cg fill='none' stroke='%23E3A73F' stroke-opacity='0.035' stroke-width='1'%3E%3Cpath d='M-20 40 Q100 10 200 60 T420 30'/%3E%3Cpath d='M-20 90 Q100 60 200 110 T420 80'/%3E%3Cpath d='M-20 140 Q100 110 200 160 T420 130'/%3E%3Cpath d='M-20 190 Q100 160 200 210 T420 180'/%3E%3Cpath d='M-20 240 Q100 210 200 260 T420 230'/%3E%3Cpath d='M-20 290 Q100 260 200 310 T420 280'/%3E%3Cpath d='M-20 340 Q100 310 200 360 T420 330'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:500px 500px;
+  pointer-events:none;
+  z-index:0;
+}
+.wrap{position:relative; z-index:1; display:flex; max-width:1400px; margin:0 auto;}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:280px; flex-shrink:0;
+  position:sticky; top:0; height:100vh;
+  border-right:1px solid var(--border);
+  padding:28px 0 28px 0;
+  display:flex; flex-direction:column;
+  overflow-y:auto;
+}
+.brand{padding:0 24px 20px 24px; border-bottom:1px solid var(--border-soft); margin-bottom:8px;}
+.brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.15em; color:var(--accent); text-transform:uppercase;}
+.brand-title{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600; margin-top:6px; line-height:1.3;}
+.nav-list{display:flex; flex-direction:column; padding:8px 12px; gap:2px; flex:1;}
+.nav-item{
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:6px;
+  text-decoration:none; color:var(--text-secondary);
+  font-size:13px; transition:background 0.15s, color 0.15s;
+  border-left:2px solid transparent;
+}
+.nav-item:hover{background:var(--bg-panel-2); color:var(--text-primary);}
+.nav-item.active{background:var(--accent-glow); color:var(--accent); border-left:2px solid var(--accent);}
+.nav-code{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-muted); min-width:22px;}
+.nav-item.active .nav-code{color:var(--accent);}
+.nav-label{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.progress-box{padding:16px 24px 0 24px; border-top:1px solid var(--border-soft); margin-top:8px;}
+.progress-label{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-muted); letter-spacing:0.1em; margin-bottom:8px; display:flex; justify-content:space-between;}
+.progress-track{height:4px; background:var(--bg-panel-2); border-radius:2px; overflow:hidden;}
+.progress-fill{height:100%; background:var(--accent); width:0%; transition:width 0.3s;}
+
+/* ===== MAIN ===== */
+.main{flex:1; min-width:0; padding:48px 56px 120px 56px;}
+
+.hero{margin-bottom:56px;}
+.hero-eyebrow{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.15em;
+  color:var(--accent); text-transform:uppercase; display:flex; align-items:center; gap:8px;
+}
+.hero-eyebrow::before{content:''; width:20px; height:1px; background:var(--accent);}
+.hero h1{
+  font-family:'Space Grotesk',sans-serif; font-weight:700;
+  font-size:42px; line-height:1.15; margin:14px 0 16px 0;
+  max-width:720px;
+}
+.hero-sub{font-size:16px; color:var(--text-secondary); max-width:600px; line-height:1.6; margin-bottom:28px;}
+.readout{display:flex; flex-wrap:wrap; gap:10px;}
+.readout-chip{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-secondary);
+  border:1px solid var(--border); padding:6px 12px; border-radius:5px;
+  background:var(--bg-panel); display:flex; align-items:center; gap:6px;
+}
+.readout-chip b{color:var(--accent); font-weight:600;}
+
+/* ===== STEP ===== */
+.step{padding-top:36px; margin-top:8px; scroll-margin-top:24px;}
+.step-head{display:flex; align-items:flex-start; gap:18px; margin-bottom:22px;}
+.monument{
+  width:52px; height:52px; border-radius:50%;
+  border:2px solid var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; position:relative;
+  background:var(--accent-glow);
+}
+.monument::before, .monument::after{
+  content:''; position:absolute; background:var(--accent);
+}
+.monument::before{width:8px; height:1px; top:50%; left:-11px;}
+.monument::after{width:8px; height:1px; top:50%; right:-11px;}
+.monument span{font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; color:var(--accent);}
+.step-title-wrap{flex:1; padding-top:4px;}
+.step-title-wrap h2{font-family:'Space Grotesk',sans-serif; font-size:23px; font-weight:600;}
+.step-blurb{color:var(--text-secondary); font-size:14px; margin-top:4px;}
+.done-toggle{
+  display:flex; align-items:center; gap:6px; padding-top:8px;
+  font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-muted);
+  cursor:pointer; user-select:none; letter-spacing:0.05em; text-transform:uppercase;
+}
+.done-toggle input{accent-color:var(--accent); width:14px; height:14px; cursor:pointer;}
+.step.is-done .step-title-wrap h2{color:var(--text-secondary); text-decoration:line-through; text-decoration-color:var(--border);}
+.step.is-done .monument{background:var(--accent); }
+.step.is-done .monument span{color:var(--bg-deep);}
+
+.step-body{padding-left:70px; border-left:1px solid var(--border-soft); margin-left:26px; padding-bottom:8px;}
+.body-text{color:var(--text-secondary); font-size:14.5px; line-height:1.75; margin-bottom:16px; max-width:680px;}
+.sub-head{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:24px 0 10px 0; color:var(--text-primary);}
+
+.code-block{
+  background:var(--bg-code); border:1px solid var(--border);
+  border-radius:8px; overflow:hidden; margin-bottom:18px; max-width:720px;
+}
+.code-bar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 14px; border-bottom:1px solid var(--border);
+  font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em;
+  color:var(--text-muted);
+}
+.copy-btn{
+  background:transparent; border:1px solid var(--border); color:var(--text-secondary);
+  font-family:'IBM Plex Mono',monospace; font-size:10px; padding:3px 9px; border-radius:4px;
+  cursor:pointer; letter-spacing:0.05em; transition:all 0.15s;
+}
+.copy-btn:hover{border-color:var(--accent); color:var(--accent);}
+.copy-btn.copied{border-color:var(--success-text); color:var(--success-text);}
+.code-block pre{padding:14px 16px; overflow-x:auto;}
+.code-block code{
+  font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+  color:#C9D4D6; white-space:pre;
+}
+
+.callout{
+  border-radius:8px; padding:14px 16px; margin-bottom:18px; max-width:680px;
+  border-left:3px solid; font-size:13.5px; line-height:1.65;
+}
+.callout-head{
+  display:flex; align-items:center; gap:8px; font-weight:600; margin-bottom:6px;
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.05em; text-transform:uppercase;
+}
+.callout-icon{font-size:11px;}
+.callout-text{color:var(--text-secondary);}
+.callout-info{background:var(--info-bg); border-color:var(--info-border);}
+.callout-info .callout-head{color:var(--info-text);}
+.callout-warn{background:var(--warn-bg); border-color:var(--warn-border);}
+.callout-warn .callout-head{color:var(--warn-text);}
+.callout-danger{background:var(--danger-bg); border-color:var(--danger-border);}
+.callout-danger .callout-head{color:var(--danger-text);}
+.callout-success{background:var(--success-bg); border-color:var(--success-border);}
+.callout-success .callout-head{color:var(--success-text);}
+
+
+.data-table{
+  width:100%; max-width:760px; border-collapse:collapse;
+  margin:12px 0 20px 0; font-size:13px;
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:8px; overflow:hidden;
+}
+.data-table th,.data-table td{
+  border-bottom:1px solid var(--border-soft);
+  padding:10px 12px; text-align:left; vertical-align:top;
+}
+.data-table th{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; letter-spacing:0.06em;
+  color:var(--accent); text-transform:uppercase;
+  background:var(--bg-panel-2);
+}
+.data-table td{color:var(--text-secondary);}
+.data-table tr:last-child td{border-bottom:none;}
+.inline-code{
+  font-family:'IBM Plex Mono',monospace; font-size:12px;
+  color:var(--accent); background:var(--bg-code);
+  border:1px solid var(--border); padding:1px 5px; border-radius:4px;
+}
+
+.footer-note{
+  margin-top:60px; padding-top:24px; border-top:1px solid var(--border-soft);
+  font-size:12.5px; color:var(--text-muted); max-width:680px; line-height:1.7;
+}
+
+@media (max-width:900px){
+  .sidebar{display:none;}
+  .main{padding:32px 20px 100px 20px;}
+  .hero h1{font-size:30px;}
+  .step-body{padding-left:0; margin-left:0; border-left:none;}
+  .step-head{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="sidebar">
+<div class="brand">
+<div class="brand-eyebrow">SfM-MVS · Direct Point-Cloud Metrics</div>
+<div class="brand-title">Tinggi &amp; Pertumbuhan Pohon Sawit</div>
+</div>
+<div class="nav-list">
+<a class="nav-item" data-target="stpre" href="#stpre">
+<span class="nav-code">PRE</span><span class="nav-label">Instalasi lidR — R 4.2.2</span>
+</a>
+<a class="nav-item" data-target="st00" href="#st00">
+<span class="nav-code">00</span><span class="nav-label">Persiapan Environment R</span>
+</a>
+<a class="nav-item" data-target="st01" href="#st01">
+<span class="nav-code">01</span><span class="nav-label">Load Dense Point Cloud</span>
+</a>
+<a class="nav-item" data-target="st02" href="#st02">
+<span class="nav-code">02</span><span class="nav-label">Quality Check Point Cloud</span>
+</a>
+<a class="nav-item" data-target="st03" href="#st03">
+<span class="nav-code">03</span><span class="nav-label">Klasifikasi Ground</span>
+</a>
+<a class="nav-item" data-target="st03b" href="#st03b">
+<span class="nav-code">03B</span><span class="nav-label">Konsistensi Terrain &amp; PPK</span>
+</a>
+<a class="nav-item" data-target="st04" href="#st04">
+<span class="nav-code">04</span><span class="nav-label">Normalisasi Point Cloud (TIN)</span>
+</a>
+<a class="nav-item" data-target="st05" href="#st05">
+<span class="nav-code">05</span><span class="nav-label">nCHM — Visualisasi &amp; QC</span>
+</a>
+<a class="nav-item" data-target="st06" href="#st06">
+<span class="nav-code">06</span><span class="nav-label">Tinggi Pokok — Buffer 2 m</span>
+</a>
+<a class="nav-item" data-target="st07" href="#st07">
+<span class="nav-code">07</span><span class="nav-label">Baseline D1 — Point Cloud</span>
+</a>
+<a class="nav-item" data-target="st08" href="#st08">
+<span class="nav-code">08</span><span class="nav-label">Delta &amp; Residual Zone</span>
+</a>
+</div>
+<div class="progress-box">
+<div class="progress-label"><span>PROGRES</span><span id="progress-count">0/11</span></div>
+<div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+</nav>
+<main class="main">
+<div class="hero">
+<div class="hero-eyebrow">SfM-MVS · Dense Cloud</div>
+<h1>Monitoring Pertumbuhan Tinggi Pohon Sawit Langsung dari Normalized Dense Point Cloud</h1>
+<p class="hero-sub">Panduan step-by-step di R/lidR — dari dense cloud UAV SfM-MVS, klasifikasi ground, normalisasi tinggi, ekstraksi metrik tinggi langsung dalam buffer 2 m per TREE_ID, monitoring delta antarperiode, hingga output polygon residual zone untuk re-checking.</p>
+<div class="readout"><div class="readout-chip">SUMBER <b>Foto Udara · SfM-MVS</b></div><div class="readout-chip">POSISI <b>PPK</b></div><div class="readout-chip">TINGGI UTAMA <b>P95 Point Cloud</b></div><div class="readout-chip">BUFFER <b>2 m</b></div><div class="readout-chip">OUTPUT <b>CSV / SHP / GeoTIFF</b></div><div class="readout-chip">VERSI <b>v0.4.0</b></div></div>
+</div>
+<section class="step" data-idx="0" id="stpre">
+<div class="step-head">
+<div class="monument"><span>PRE</span></div>
+<div class="step-title-wrap">
+<h2>Tutorial Instalasi Paket lidR pada R 4.2.2 di RStudio Windows</h2>
+<p class="step-blurb">Metode arsip manual untuk instalasi lidR pada rumpun R 4.2.x.</p>
+</div>
+<label class="done-toggle">
+<input onchange="toggleDone('stpre', this)" type="checkbox"/>
+<span>selesai</span>
+</label>
+</div>
+<div class="step-body">
+<p class="body-text">Proses instalasi paket pemrosesan LiDAR (lidR) pada R versi spesifik/lawas (seperti rumpun 4.2.x) sering kali gagal karena masalah kompatibilitas compiler C++ dan hilangnya file biner online di server CRAN utama. Tutorial ini menggunakan metode Arsip Manual yang terbukti sukses 100%.</p>
+<h4 class="sub-head">1. Ringkasan Alur Kerja</h4>
+<div class="callout callout-info">
+<div class="callout-head"><span class="callout-icon">◆</span>Alur kerja</div>
+<div class="callout-text">
+            • Instalasi Rtools42 (Penghubung sistem Windows).<br/>
+            • Unduh file biner .zip versi stabil yang cocok.<br/>
+            • Instalasi mandiri secara lokal di RStudio.
+          </div>
+</div>
+<h4 class="sub-head">2. Langkah-Langkah Detil</h4>
+<h4 class="sub-head">Langkah 1: Mengunduh dan Menginstal Rtools 42</h4>
+<p class="body-text">Paket spasial tingkat tinggi seperti lidR membutuhkan compiler eksternal agar bisa berjalan di sistem operasi Windows. Karena Anda menggunakan R versi 4.2.x, Anda wajib menggunakan Rtools versi 42.</p>
+<div class="callout callout-info">
+<div class="callout-head"><span class="callout-icon">◆</span>Rtools42</div>
+<div class="callout-text">
+            • Buka browser Anda dan unduh installer resmi Rtools 42 melalui tautan berikut:<br/>
+<a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools42.html" rel="noopener noreferrer" style="color:var(--info-text);" target="_blank">https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools42.html</a><br/><br/>
+            • Jalankan file .exe yang sudah diunduh dan ikuti instruksi instalasi standar (Next -&gt; Next -&gt; Finish). Biarkan folder instalasi tetap di direktori bawaan (<code>C:\rtools42</code>).<br/><br/>
+            • <b>PENTING:</b> Jika RStudio Anda sedang terbuka, tutup dan buka kembali (Restart) RStudio agar sistem mengenali path Rtools yang baru dipasang.
+          </div>
+</div>
+<h4 class="sub-head">Langkah 2: Mengunduh File Biner Paket Spasial (.zip)</h4>
+<p class="body-text">Karena server CRAN online sudah memotong indeks biner langsung untuk R 4.2 melalui perintah otomatis, kita harus mengunduhnya secara manual dari server arsip resmi CRAN. Unduh kedua file di bawah ini lewat browser Anda (Simpan di folder Downloads, dan JANGAN diekstrak):</p>
+<div class="callout callout-info">
+<div class="callout-head"><span class="callout-icon">◆</span>File binary yang diunduh</div>
+<div class="callout-text">
+            • Unduh Paket rlas (Versi 1.6.0):<br/>
+<a href="https://cran.r-project.org/bin/windows/contrib/4.2/rlas_1.6.0.zip" rel="noopener noreferrer" style="color:var(--info-text);" target="_blank">https://cran.r-project.org/bin/windows/contrib/4.2/rlas_1.6.0.zip</a><br/><br/>
+            • Unduh Paket lidR (Versi 4.0.1/4.1.1):<br/>
+<a href="https://cran.r-project.org/bin/windows/contrib/4.2/lidR_4.0.1.zip" rel="noopener noreferrer" style="color:var(--info-text);" target="_blank">https://cran.r-project.org/bin/windows/contrib/4.2/lidR_4.0.1.zip</a>
+</div>
+</div>
+<h4 class="sub-head">Langkah 3: Proses Eksekusi Instalasi di RStudio</h4>
+<p class="body-text">Buka RStudio Anda, lalu salin dan jalankan baris perintah di bawah ini secara berurutan pada jendela Console:</p>
+<h4 class="sub-head">A. Kembalikan Repositori ke Mode Global (Default)</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>options(repos = c(CRAN = "https://cloud.r-project.org/"))</code></pre>
+</div>
+<h4 class="sub-head">B. Instalasi Paket rlas dari File Lokal</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>install.packages("C:/Users/18000667/Downloads/rlas_1.6.0.zip", repos = NULL, type = "win.binary")</code></pre>
+</div>
+<h4 class="sub-head">C. Instalasi Paket lidR dari File Lokal</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>install.packages("C:/Users/18000667/Downloads/lidR_4.0.1.zip", repos = NULL, type = "win.binary")</code></pre>
+</div>
+<h4 class="sub-head">Langkah 4: Verifikasi Sukses</h4>
+<p class="body-text">Untuk memastikan seluruh fungsi pemrosesan point cloud sudah siap digunakan, panggil library tersebut menggunakan perintah:</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>library(lidR)</code></pre>
+</div>
+<p class="body-text">Ciri-Ciri Instalasi Berhasil: Konsol akan menampilkan pesan sambutan seperti di bawah ini tanpa ada pesan Error:</p>
+<div class="code-block">
+<div class="code-bar"><span>CONSOLE OUTPUT</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>lidR 4.1.1 using 6 threads. Help on &lt;gis.stackexchange.com&gt;.
+Warning message:
+package 'lidR' was built under R version 4.2.3</code></pre>
+</div>
+</div>
+</section>
+<section class="step" data-idx="1" id="st00">
+<div class="step-head">
+<div class="monument"><span>00</span></div>
+<div class="step-title-wrap">
+<h2>Persiapan Environment R</h2>
+<p class="step-blurb">Install &amp; load package, atur folder kerja.</p>
+</div>
+<label class="done-toggle">
+<input onchange="toggleDone('st00', this)" type="checkbox"/>
+<span>selesai</span>
+</label>
+</div>
+<div class="step-body">
+<p class="body-text">Buka RStudio. Semua kode berikut diketik di panel Console (area dengan tanda "&gt;"), lalu tekan Enter.</p>
+<h4 class="sub-head">Install package</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>install.packages("lidR")
+install.packages("terra")
+install.packages("sf")
+install.packages("tidyverse")
+install.packages("RCSF")</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Catatan instalasi</div>
+<div class="callout-text">Jika muncul "Do you want to install from sources..." ketik no lalu Enter. Pesan kuning (warning) normal — hanya pesan merah "Error" yang berarti masalah.</div>
+</div>
+<h4 class="sub-head">Load package</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>library(lidR)
+library(terra)
+library(sf)
+library(tidyverse)
+library(RCSF)</code></pre>
+</div>
+<h4 class="sub-head">Set working directory</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>setwd("C:/Project/SawitMuda/Analysis")
+dir.create("output", showWarnings = FALSE)</code></pre>
+</div>
+</div>
+</section>
+<section class="step" data-idx="2" id="st01">
+<div class="step-head">
+<div class="monument"><span>01</span></div>
+<div class="step-title-wrap">
+<h2>Load Dense Point Cloud</h2>
+<p class="step-blurb">Import hasil export dense cloud fotogrametri.</p>
+</div>
+<label class="done-toggle">
+<input onchange="toggleDone('st01', this)" type="checkbox"/>
+<span>selesai</span>
+</label>
+</div>
+<div class="step-body">
+<p class="body-text">Load file LAS/LAZ hasil export dense cloud dari software fotogrametri (Pix4D, Metashape, DJI Terra). Data ini BELUM memiliki klasifikasi ground yang valid — masih mentah untuk sebagian besar area.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>las &lt;- readLAS("dense_cloud_orth.las")
+
+summary(las)
+st_crs(las)</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Jika CRS kosong / NA</div>
+<div class="callout-text">Set manual dengan EPSG sesuai lokasi, misal UTM Zona 48S:<br/>st_crs(las) &lt;- 32748</div>
+</div>
+<div class="callout callout-info">
+<div class="callout-head"><span class="callout-icon">◆</span>Cek densitas dulu</div>
+<div class="callout-text">GSD foto 5cm TIDAK sama dengan jarak antar titik dense cloud. Resolusi CHM nanti ditentukan dari densitas riil (Step 02), bukan GSD kamera.</div>
+</div>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>plot(las, size = 2, bg = "white")</code></pre>
+</div>
+</div>
+</section>
+<section class="step" data-idx="3" id="st02">
+<div class="step-head">
+<div class="monument"><span>02</span></div>
+<div class="step-title-wrap">
+<h2>Quality Check Point Cloud</h2>
+<p class="step-blurb">Cek densitas, noise, dan duplikat sebelum diproses lebih lanjut.</p>
+</div>
+<label class="done-toggle">
+<input onchange="toggleDone('st02', this)" type="checkbox"/>
+<span>selesai</span>
+</label>
+</div>
+<div class="step-body">
+<p class="body-text">Tahap krusial — data yang kotor akan menghasilkan tinggi pohon yang salah.</p>
+<h4 class="sub-head">2.1 — Cek densitas &amp; hitung resolusi CHM ideal</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>density &lt;- rasterize_density(las, res = 1)
+plot(density, col = height.colors(50))
+
+avg_density &lt;- mean(values(density), na.rm = TRUE)
+avg_spacing &lt;- 1 / sqrt(avg_density)
+res_chm &lt;- round(avg_spacing * 2, 2)
+
+cat("Densitas:", round(avg_density,1), "titik/m2\n")
+cat("Spacing:", round(avg_spacing,3), "meter\n")
+cat("Resolusi CHM disarankan:", res_chm, "meter\n")</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Kenapa bukan GSD foto langsung</div>
+<div class="callout-text">Densitas dense cloud riil bisa jauh lebih rendah dari GSD foto tergantung tekstur permukaan &amp; overlap. Aturan: resolusi raster ≥ 2x point spacing riil.</div>
+</div>
+<h4 class="sub-head">2.2 — Bersihkan noise &amp; duplikat</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>las &lt;- filter_duplicates(las)
+las &lt;- classify_noise(las, sor(k = 10, m = 3))
+las &lt;- filter_poi(las, Classification != 18L)</code></pre>
+</div>
+</div>
+</section>
+<section class="step" data-idx="4" id="st03">
+<div class="step-head">
+<div class="monument"><span>03</span></div>
+<div class="step-title-wrap">
+<h2>Klasifikasi Ground</h2>
+<p class="step-blurb">Klasifikasi dari nol dengan CSF — ekspektasi hasil lebih jarang.</p>
+</div>
+<label class="done-toggle">
+<input onchange="toggleDone('st03', this)" type="checkbox"/>
+<span>selesai</span>
+</label>
+</div>
+<div class="step-body">
+<p class="body-text">Dense cloud fotogrametri belum pernah diklasifikasi — ini klasifikasi dari nol, hasilnya wajar jauh lebih jarang di bawah tajuk dibanding LiDAR.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>las &lt;- classify_ground(las, csf(
+  cloth_resolution = 0.5,
+  class_threshold = 0.3,
+  rigidness = 2
+))
+
+table(las$Classification)
+pct_ground &lt;- sum(las$Classification == 2) / npoints(las) * 100
+cat("Persentase ground:", round(pct_ground,1), "%\n")</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Ekspektasi proporsi ground</div>
+<div class="callout-text">Wajar berkisar 10–25% tergantung lebar gawangan terbuka. Jika &lt; 5%, referensi ground dari dense cloud sangat terbatas — pertimbangkan DTM independen atau GCP sebagai referensi tanah (Step 03B).</div>
+</div>
+<h4 class="sub-head">Visualisasi &amp; cross-section check</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>plot(las, color = "Classification", size = 2, bg = "white")</code></pre>
+</div>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>p1 &lt;- c(min(las$X), mean(las$Y)); p2 &lt;- c(max(las$X), mean(las$Y))
+las_tr &lt;- clip_transect(las, p1, p2, width = 3)
+ggplot(payload(las_tr), aes(X, Z, color = Classification)) +
+  geom_point(size = 0.5) + coord_equal() + theme_minimal()</code></pre>
+</div>
+</div>
+</section>
+<section class="step" data-idx="5" id="st03b">
+<div class="step-head">
+<div class="monument"><span>03B</span></div>
+<div class="step-title-wrap">
+<h2>Konsistensi Terrain &amp; Posisi Antarperiode</h2>
+<p class="step-blurb">PPK menjaga georeferensi; QC terrain tetap wajib karena delta tinggi dihitung dari tinggi relatif terhadap tanah.</p>
+</div>
+<label class="done-toggle"><input onchange="toggleDone('st03b', this)" type="checkbox"/><span>selesai</span></label>
+</div>
+<div class="step-body">
+<div class="callout callout-success">
+<div class="callout-head"><span class="callout-icon">✓</span>Kondisi proyek</div>
+<div class="callout-text">Akuisisi menggunakan <b>PPK</b>, sehingga konsistensi posisi horizontal/vertikal antarflight lebih terkontrol. Namun PPK tidak menggantikan kebutuhan model terrain: tinggi tanaman tetap harus dinormalisasi terhadap permukaan tanah yang valid.</div>
+</div>
+<p class="body-text">Untuk setiap semester, gunakan prosedur klasifikasi ground dan normalisasi yang sama. Jangan membandingkan nilai Z absolut dense cloud antarperiode. Yang dibandingkan adalah <b>tinggi relatif setelah normalisasi</b>.</p>
+<h4 class="sub-head">Pilihan referensi terrain</h4>
+<table class="data-table">
+<thead><tr><th>Mode</th><th>Kapan digunakan</th><th>Catatan</th></tr></thead>
+<tbody>
+<tr><td><span class="inline-code">CSF → TIN</span></td><td>Ground di gawangan masih cukup terlihat pada dense cloud.</td><td>Gunakan parameter dan QC yang sama pada setiap semester.</td></tr>
+<tr><td><span class="inline-code">DTM eksternal</span></td><td>Tersedia DTM terrain yang stabil dan kompatibel.</td><td>Paling baik untuk konsistensi antarperiode jika kualitas DTM telah tervalidasi.</td></tr>
+</tbody>
+</table>
+<h4 class="sub-head">Fallback proyek — CSF → TIN</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>las &lt;- classify_ground(las, csf(
+  cloth_resolution = 0.5,
+  class_threshold  = 0.3,
+  rigidness        = 2
+))
+
+# Tinggi relatif terhadap terrain
+nlas &lt;- normalize_height(las, tin())</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Quality gate</div>
+<div class="callout-text">Jika ground point sangat sedikit, terdapat gap terrain, atau normalisasi menghasilkan pola negatif/positif sistematis, jangan lanjut menghitung delta. Perbaiki terrain terlebih dahulu atau gunakan DTM independen yang tervalidasi.</div>
+</div>
+</div>
+</section>
+<section class="step" data-idx="6" id="st04">
+<div class="step-head">
+<div class="monument"><span>04</span></div>
+<div class="step-title-wrap">
+<h2>Normalisasi Point Cloud &amp; QC Tinggi Relatif</h2>
+<p class="step-blurb">Pastikan Z sudah menjadi tinggi relatif terhadap terrain sebelum pengukuran per pokok.</p>
+</div>
+<label class="done-toggle">
+<input onchange="toggleDone('st04', this)" type="checkbox"/>
+<span>selesai</span>
+</label>
+</div>
+<div class="step-body">
+<p class="body-text">Objek nlas adalah input utama untuk pengukuran tinggi per pokok. Semua semester harus diproses dengan prosedur normalisasi yang konsisten. nCHM tidak diperlukan untuk menghitung tinggi utama; pengukuran dilakukan langsung dari distribusi Z pada normalized point cloud.</p>
+<h4 class="sub-head">Validasi tinggi setelah normalisasi</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>summary(nlas$Z)
+
+# Jika normalisasi memakai ground Class 2 dari dense cloud
+gnd &lt;- filter_ground(nlas)
+if (npoints(gnd) &gt; 0) {
+  cat("Ground Z min :", min(gnd$Z, na.rm = TRUE), "
+")
+  cat("Ground Z max :", max(gnd$Z, na.rm = TRUE), "
+")
+  cat("Ground Z mean:", mean(gnd$Z, na.rm = TRUE), "
+")
+}</code></pre>
+</div>
+<div class="callout callout-success">
+<div class="callout-head"><span class="callout-icon">✓</span>Target QC</div>
+<div class="callout-text">Ground yang dipakai sebagai referensi seharusnya berada dekat 0 m setelah normalisasi. Nilai negatif kecil masih dapat muncul akibat interpolasi, tetapi offset besar atau pola sistematis harus diperiksa sebelum nCHM dibuat.</div>
+</div>
+<h4 class="sub-head">Filter nilai negatif ekstrem &amp; simpan hasil</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>nlas &lt;- filter_poi(nlas, Z &gt;= -0.1)
+writeLAS(nlas, "output/normalized_pointcloud.laz")</code></pre>
+</div>
+</div>
+</section>
+<section class="step" data-idx="7" id="st05">
+<div class="step-head">
+<div class="monument"><span>05</span></div>
+<div class="step-title-wrap">
+<h2>nCHM — Output Visualisasi &amp; Spatial QC</h2>
+<p class="step-blurb">nCHM tetap dibuat sebagai peta pendukung, bukan sumber utama pengukuran tinggi per pokok.</p>
+</div>
+<label class="done-toggle"><input onchange="toggleDone('st05', this)" type="checkbox"/><span>selesai</span></label>
+</div>
+<div class="step-body">
+<p class="body-text">Karena tujuan utama adalah delta tinggi antarperiode, tinggi pokok akan dihitung langsung dari normalized point cloud. nCHM dipertahankan untuk visualisasi pola tinggi, pengecekan spasial, overlay residual zone, dan komunikasi hasil ke GIS/operasional.</p>
+<div class="callout callout-info">
+<div class="callout-head"><span class="callout-icon">◆</span>Peran nCHM pada v0.4.0</div>
+<div class="callout-text"><b>Measurement:</b> normalized point cloud dalam buffer 2 m.<br/><b>Mapping/QC:</b> nCHM GeoTIFF.</div>
+</div>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE — OPTIONAL MAPPING OUTPUT</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>chm &lt;- rasterize_canopy(
+  nlas,
+  res = res_chm,
+  algorithm = pitfree(
+    thresholds = c(0, 2, 5, 10),
+    max_edge = c(0, 1.5)
+  )
+)
+
+plot(chm, col = height.colors(50))
+writeRaster(chm, "output/nCHM_sawit.tif", overwrite = TRUE)</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Jangan gunakan nCHM sebagai satu-satunya tinggi pokok</div>
+<div class="callout-text">Rasterisasi mengubah distribusi 3D menjadi grid 2D. Untuk monitoring delta tinggi, metrik utama diambil langsung dari titik Z normalized agar tidak bergantung pada resolusi raster dan interpolasi canopy.</div>
+</div>
+</div>
+</section>
+<section class="step" data-idx="8" id="st06">
+<div class="step-head">
+<div class="monument"><span>06</span></div>
+<div class="step-title-wrap">
+<h2>Ekstraksi Tinggi Langsung dari Point Cloud — Buffer 2 m</h2>
+<p class="step-blurb">P95 sebagai estimator utama sementara; P99 dan mean top 10/20/30% disimpan untuk evaluasi.</p>
+</div>
+<label class="done-toggle"><input onchange="toggleDone('st06', this)" type="checkbox"/><span>selesai</span></label>
+</div>
+<div class="step-body">
+<p class="body-text">Untuk TBM pada proyek ini, tajuk antar-pokok belum saling bersentuhan. Karena itu buffer tetap <b>radius 2 m</b> dipertahankan. Risiko point cloud tajuk tetangga masuk ke buffer relatif rendah, sementara prosedur menjadi sederhana dan konsisten antarsemester.</p>
+<div class="callout callout-success">
+<div class="callout-head"><span class="callout-icon">✓</span>Estimator utama v0.4.0</div>
+<div class="callout-text"><span class="inline-code">P95</span> digunakan sebagai <b>h_main</b> sementara karena belum tersedia tinggi lapangan untuk kalibrasi. Jangan menganggap P95 sebagai standar biologis final; P99, Top10, Top20, dan Top30 tetap disimpan agar dapat dievaluasi ketika data referensi tersedia.</div>
+</div>
+<h4 class="sub-head">6.1 — Load titik pokok dan buat buffer 2 m</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>titik_pokok &lt;- st_read("data/titik_pokok_sawit.shp")
+titik_pokok &lt;- st_transform(titik_pokok, st_crs(nlas))
+
+id_field &lt;- "TREE_ID"  # ganti dengan nama field ID permanen
+stopifnot(id_field %in% names(titik_pokok))
+stopifnot(!anyDuplicated(titik_pokok[[id_field]]))
+
+titik_pokok$tree_id &lt;- as.character(titik_pokok[[id_field]])
+buffer_pokok &lt;- st_buffer(titik_pokok, dist = 2)</code></pre>
+</div>
+<h4 class="sub-head">6.2 — Clip normalized point cloud per buffer</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code># Satu LAS per polygon buffer
+las_tree &lt;- clip_roi(nlas, buffer_pokok)</code></pre>
+</div>
+<h4 class="sub-head">6.3 — Hitung P95, P99, Mean Top 10/20/30%</h4>
+<p class="body-text">Titik sangat rendah dibuang dari estimator tajuk. Threshold di bawah ini hanya filter teknis vegetasi/ground residual dan harus tetap lebih rendah dari tinggi sawit termuda.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>min_veg_h &lt;- 0.30  # meter; filter teknis, bukan threshold pertumbuhan
+
+top_mean &lt;- function(z, prop) {
+  z &lt;- sort(z, decreasing = TRUE)
+  if (length(z) == 0) return(NA_real_)
+  n_take &lt;- max(1L, ceiling(length(z) * prop))
+  mean(z[seq_len(n_take)], na.rm = TRUE)
+}
+
+calc_tree_metrics &lt;- function(las_i) {
+  if (is.null(las_i) || npoints(las_i) == 0) {
+    return(data.frame(
+      npts = 0, p95 = NA, p99 = NA,
+      top10 = NA, top20 = NA, top30 = NA
+    ))
+  }
+
+  z &lt;- las_i$Z
+  z &lt;- z[is.finite(z) &amp; z &gt;= min_veg_h]
+
+  if (length(z) == 0) {
+    return(data.frame(
+      npts = 0, p95 = NA, p99 = NA,
+      top10 = NA, top20 = NA, top30 = NA
+    ))
+  }
+
+  data.frame(
+    npts  = length(z),
+    p95   = as.numeric(quantile(z, 0.95, na.rm = TRUE, names = FALSE)),
+    p99   = as.numeric(quantile(z, 0.99, na.rm = TRUE, names = FALSE)),
+    top10 = top_mean(z, 0.10),
+    top20 = top_mean(z, 0.20),
+    top30 = top_mean(z, 0.30)
+  )
+}
+
+metrics_list &lt;- lapply(las_tree, calc_tree_metrics)
+metrics &lt;- bind_rows(metrics_list)
+
+stopifnot(nrow(metrics) == nrow(titik_pokok))
+
+titik_pokok &lt;- bind_cols(titik_pokok, metrics) %&gt;%
+  mutate(h_main = p95)</code></pre>
+</div>
+<table class="data-table">
+<thead><tr><th>Metrik</th><th>Peran</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><span class="inline-code">p95</span></td><td>Tinggi upper-canopy robust terhadap titik ekstrem.</td><td>Estimator utama sementara.</td></tr>
+<tr><td><span class="inline-code">p99</span></td><td>Lebih dekat puncak; lebih sensitif terhadap outlier.</td><td>Pembanding/QC.</td></tr>
+<tr><td><span class="inline-code">top10</span></td><td>Mean 10% titik tertinggi.</td><td>Pembanding.</td></tr>
+<tr><td><span class="inline-code">top20</span></td><td>Mean 20% titik tertinggi.</td><td>Pembanding.</td></tr>
+<tr><td><span class="inline-code">top30</span></td><td>Mean 30% titik tertinggi; upper-canopy lebih luas.</td><td>Pembanding.</td></tr>
+<tr><td><span class="inline-code">npts</span></td><td>Jumlah titik vegetasi valid dalam buffer.</td><td>Quality-control.</td></tr>
+</tbody>
+</table>
+<div class="callout callout-info">
+<div class="callout-head"><span class="callout-icon">◆</span>Kenapa bukan MAX?</div>
+<div class="callout-text">Satu titik ekstrim pada hasil SfM dapat membuat tinggi maksimum terlalu besar. P95 lebih tahan terhadap spike dan lebih konsisten untuk perbandingan multi-periode.</div>
+</div>
+</div>
+</section>
+<section class="step" data-idx="9" id="st07">
+<div class="step-head">
+<div class="monument"><span>07</span></div>
+<div class="step-title-wrap">
+<h2>Baseline D1 — Pemetaan Variasi Tinggi Antar-Pokok</h2>
+<p class="step-blurb">Simpan metrik absolut per pokok tanpa memaksakan kelas agronomi yang belum memiliki standar.</p>
+</div>
+<label class="done-toggle"><input onchange="toggleDone('st07', this)" type="checkbox"/><span>selesai</span></label>
+</div>
+<div class="step-body">
+<p class="body-text">Karena belum tersedia standar agronomi minimum pertumbuhan tinggi dan tidak tersedia tinggi lapangan untuk kalibrasi, baseline D1 disimpan sebagai nilai kontinu. Fokusnya adalah <b>pemetaan variasi tinggi antar-pokok</b>, bukan penetapan kelas umur atau diagnosis agronomis.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>titik_D1 &lt;- titik_pokok %&gt;%
+  mutate(
+    h_D1     = h_main,
+    p99_D1   = p99,
+    t10_D1   = top10,
+    t20_D1   = top20,
+    t30_D1   = top30,
+    npts_D1  = npts
+  )</code></pre>
+</div>
+<h4 class="sub-head">7.1 — QC jumlah titik secara data-driven</h4>
+<p class="body-text">Tidak digunakan angka minimum titik yang arbitrer. Batas rendah ditentukan dari distribusi jumlah titik pada periode tersebut menggunakan aturan Tukey.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>q1_n  &lt;- quantile(titik_D1$npts_D1, 0.25, na.rm = TRUE)
+q3_n  &lt;- quantile(titik_D1$npts_D1, 0.75, na.rm = TRUE)
+iqr_n &lt;- IQR(titik_D1$npts_D1, na.rm = TRUE)
+low_n_cut &lt;- max(0, q1_n - 1.5 * iqr_n)
+
+titik_D1 &lt;- titik_D1 %&gt;%
+  mutate(
+    qc_D1 = case_when(
+      is.na(h_D1) ~ "NO_DATA",
+      npts_D1 &lt; low_n_cut ~ "LOW_POINTS",
+      TRUE ~ "OK"
+    )
+  )</code></pre>
+</div>
+<h4 class="sub-head">7.2 — Export baseline</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>dir.create("output_D1/shapefile", recursive = TRUE, showWarnings = FALSE)
+
+write.csv(
+  st_drop_geometry(titik_D1),
+  "output_D1/tinggi_pokok_sawit_D1.csv",
+  row.names = FALSE
+)
+
+st_write(
+  titik_D1,
+  "output_D1/shapefile/hasil_tinggi_pokok_D1.shp",
+  delete_layer = TRUE
+)</code></pre>
+</div>
+<div class="callout callout-success">
+<div class="callout-head"><span class="callout-icon">✓</span>Interpretasi baseline</div>
+<div class="callout-text"><span class="inline-code">h_D1</span> dipetakan sebagai nilai kontinu untuk menunjukkan variasi tinggi antar-pokok dalam blok TBM. Hindari menyebutnya sebagai peta umur apabila tidak ada tanggal tanam/umur aktual per pokok.</div>
+</div>
+</div>
+</section>
+<section class="step" data-idx="10" id="st08">
+<div class="step-head">
+<div class="monument"><span>08</span></div>
+<div class="step-title-wrap">
+<h2>Monitoring Delta Tinggi &amp; Polygon Residual Zone</h2>
+<p class="step-blurb">Delta P95 dipetakan kontinu; residual ditentukan dari quality control dan outlier statistik, bukan threshold agronomi.</p>
+</div>
+<label class="done-toggle"><input onchange="toggleDone('st08', this)" type="checkbox"/><span>selesai</span></label>
+</div>
+<div class="step-body">
+<p class="body-text">Mulai D2, join hasil periode sebelumnya berdasarkan <span class="inline-code">tree_id</span>. Karena belum ada standar agronomi minimum pertumbuhan tinggi, sistem tidak memberi label NORMAL/ANOMALI berdasarkan angka 0.10 m. Nilai pertumbuhan disimpan sebagai <b>delta kontinu</b>, sedangkan residual zone dipakai untuk re-checking kasus yang secara teknis/statistik tidak konsisten.</p>
+<h4 class="sub-head">8.1 — Bawa histori D1 dan tambahkan D2</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>prev_D1 &lt;- st_read(
+  "output_D1/shapefile/hasil_tinggi_pokok_D1.shp"
+)
+
+hist_D1 &lt;- prev_D1 %&gt;%
+  st_drop_geometry() %&gt;%
+  select(tree_id, h_D1, p99_D1, t10_D1, t20_D1, t30_D1, npts_D1, qc_D1)
+
+titik_D2 &lt;- titik_pokok %&gt;%
+  left_join(hist_D1, by = "tree_id") %&gt;%
+  mutate(
+    h_D2    = h_main,
+    p99_D2  = p99,
+    t10_D2  = top10,
+    t20_D2  = top20,
+    t30_D2  = top30,
+    npts_D2 = npts,
+    dh_D2   = h_D2 - h_D1
+  )</code></pre>
+</div>
+<h4 class="sub-head">8.2 — Residual detection: teknis + outlier statistik</h4>
+<p class="body-text">Residual bukan diagnosis agronomis. Ia adalah flag untuk kasus yang perlu re-checking karena data tidak tersedia, jumlah titik sangat rendah relatif terhadap populasi, atau delta berada jauh di luar distribusi mayoritas pokok pada periode yang sama.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code># Batas jumlah titik rendah — Tukey lower fence
+q1_n2  &lt;- quantile(titik_D2$npts_D2, 0.25, na.rm = TRUE)
+q3_n2  &lt;- quantile(titik_D2$npts_D2, 0.75, na.rm = TRUE)
+iqr_n2 &lt;- IQR(titik_D2$npts_D2, na.rm = TRUE)
+low_n2_cut &lt;- max(0, q1_n2 - 1.5 * iqr_n2)
+
+# Batas delta residual — Tukey fences
+q1_d  &lt;- quantile(titik_D2$dh_D2, 0.25, na.rm = TRUE)
+q3_d  &lt;- quantile(titik_D2$dh_D2, 0.75, na.rm = TRUE)
+iqr_d &lt;- IQR(titik_D2$dh_D2, na.rm = TRUE)
+low_d  &lt;- q1_d - 1.5 * iqr_d
+high_d &lt;- q3_d + 1.5 * iqr_d
+
+titik_D2 &lt;- titik_D2 %&gt;%
+  mutate(
+    residual_reason = case_when(
+      is.na(h_D1) | is.na(h_D2) ~ "NO_DATA",
+      npts_D2 &lt; low_n2_cut ~ "LOW_POINTS_D2",
+      dh_D2 &lt; low_d ~ "DELTA_LOW_OUTLIER",
+      dh_D2 &gt; high_d ~ "DELTA_HIGH_OUTLIER",
+      TRUE ~ "OK"
+    ),
+    residual_flag = residual_reason != "OK"
+  )</code></pre>
+</div>
+<div class="callout callout-warn">
+<div class="callout-head"><span class="callout-icon">▲</span>Interpretasi aman</div>
+<div class="callout-text">Delta negatif tidak otomatis berarti pokok bermasalah, dan delta kecil tidak otomatis berarti pertumbuhan terhambat. Tanpa standar agronomi dan data tinggi lapangan, keduanya dipertahankan sebagai nilai terukur. Hanya kasus residual yang diprioritaskan untuk re-checking.</div>
+</div>
+<h4 class="sub-head">8.3 — Buat polygon residual zone dari buffer 2 m</h4>
+<p class="body-text">Setiap pokok residual dikonversi menjadi polygon buffer 2 m. Polygon tidak didissolve secara default agar <span class="inline-code">tree_id</span>, delta, dan alasan residual tetap dapat ditelusuri.</p>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code># Attribute residual point
+residual_attr &lt;- titik_D2 %&gt;%
+  filter(residual_flag) %&gt;%
+  st_drop_geometry() %&gt;%
+  select(tree_id, h_D1, h_D2, dh_D2, npts_D2, residual_reason)
+
+# Polygon buffer 2 m hanya untuk TREE_ID residual
+residual_zone_D2 &lt;- buffer_pokok %&gt;%
+  select(tree_id) %&gt;%
+  inner_join(residual_attr, by = "tree_id")
+
+st_write(
+  residual_zone_D2,
+  "output_D2/shapefile/residual_zone_D2.shp",
+  delete_layer = TRUE
+)</code></pre>
+</div>
+<h4 class="sub-head">8.4 — Export monitoring D2</h4>
+<div class="code-block">
+<div class="code-bar"><span>R CONSOLE</span><button class="copy-btn" onclick="copyCode(this)">COPY</button></div>
+<pre><code>dir.create("output_D2/shapefile", recursive = TRUE, showWarnings = FALSE)
+
+write.csv(
+  st_drop_geometry(titik_D2),
+  "output_D2/monitoring_tinggi_D2.csv",
+  row.names = FALSE
+)
+
+st_write(
+  titik_D2,
+  "output_D2/shapefile/monitoring_tinggi_D2.shp",
+  delete_layer = TRUE
+)</code></pre>
+</div>
+<table class="data-table">
+<thead><tr><th>Output</th><th>Isi</th><th>Penggunaan</th></tr></thead>
+<tbody>
+<tr><td><span class="inline-code">monitoring_tinggi_D2.shp</span></td><td>h_D1, h_D2, delta, metrik pembanding, QC.</td><td>Peta variasi tinggi dan pertumbuhan antar-pokok.</td></tr>
+<tr><td><span class="inline-code">residual_zone_D2.shp</span></td><td>Polygon 2 m untuk pokok residual + alasan.</td><td>Re-checking terarah.</td></tr>
+<tr><td><span class="inline-code">nCHM_sawit.tif</span></td><td>Raster tinggi kanopi.</td><td>Visualisasi dan spatial QC.</td></tr>
+<tr><td><span class="inline-code">monitoring_tinggi_D2.csv</span></td><td>Tabel seluruh TREE_ID dan metrik.</td><td>Analisis statistik / reporting.</td></tr>
+</tbody>
+</table>
+<div class="callout callout-success">
+<div class="callout-head"><span class="callout-icon">✓</span>Pola periode berikutnya</div>
+<div class="callout-text">D3 membaca D2, menambahkan <span class="inline-code">h_D3</span>, lalu menghitung <span class="inline-code">dh_D3 = h_D3 - h_D2</span>. Residual zone dihitung ulang dari kualitas data dan distribusi delta periode tersebut.</div>
+</div>
+</div>
+</section>
+<div class="footer-note">Tutorial v0.4.0 — dense cloud fotogrametri SfM-MVS dari foto RGB dengan positioning PPK. Tinggi utama per pokok dihitung langsung dari normalized point cloud dalam buffer radius 2 m menggunakan P95; P99 dan mean Top 10/20/30% disimpan sebagai pembanding. nCHM digunakan untuk visualisasi/QC. Monitoring multi-periode menggunakan TREE_ID permanen, delta tinggi kontinu, serta polygon residual zone untuk re-checking. Tidak digunakan threshold agronomi minimum pertumbuhan karena standar tersebut belum tersedia.</div>
+</main>
+</div>
+<script>
+function copyCode(btn){
+  const code = btn.closest('.code-block').querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'COPIED'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function updateProgress(){
+  const total = document.querySelectorAll('.step').length;
+  const done = document.querySelectorAll('.step.is-done').length;
+  document.getElementById('progress-count').textContent = done + '/' + total;
+  document.getElementById('progress-fill').style.width = (done/total*100) + '%';
+}
+
+function toggleDone(id, checkbox){
+  const step = document.getElementById(id);
+  step.classList.toggle('is-done', checkbox.checked);
+  updateProgress();
+}
+
+// Scrollspy
+const navItems = document.querySelectorAll('.nav-item');
+const stepSections = document.querySelectorAll('.step');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      navItems.forEach(n => n.classList.remove('active'));
+      const active = document.querySelector('.nav-item[data-target="'+entry.target.id+'"]');
+      if(active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+stepSections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "inputs": {
+    "point_cloud": "D:/Project/data/dense_cloud_D1.laz",
+    "tree_points": "D:/Project/data/titik_pokok_sawit.shp",
+    "external_dtm": "D:/Project/reference/DTM_reference_D1.tif",
+    "previous_result_shp": "",
+    "output_root": "D:/Project/results"
+  },
+  "parameters": {
+    "fallback_epsg": 32748,
+    "tree_id_field": "TREE_ID",
+    "terrain_mode": "CSF_TIN",
+    "monitoring_mode": "first",
+    "period_code": "D1",
+    "previous_period_code": "",
+    "remove_duplicates": true,
+    "run_noise_filter": true,
+    "sor_k": 10,
+    "sor_m": 3,
+    "csf_cloth_resolution": 0.5,
+    "csf_class_threshold": 0.3,
+    "csf_rigidness": 2,
+    "dtm_resolution_m": 0.5,
+    "buffer_radius_m": 2.0,
+    "min_veg_h_m": 0.3,
+    "min_normalized_z_m": -0.1,
+    "threads": 4,
+    "create_nchm": true,
+    "create_qc_plots": true,
+    "chm_auto_resolution": true,
+    "chm_resolution": 0.1,
+    "chm_min_auto_resolution": 0.05,
+    "save_normalized_laz": true
+  }
+}
